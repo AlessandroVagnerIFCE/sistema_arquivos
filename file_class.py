@@ -8,8 +8,8 @@ class FFile:
         self.type = type
         self.data = data
 
-    #def rename(self, newName):
-        #self.name = newName
+    def rename(self, newName):
+        self.name = newName
 
     def read(self):
         if (self.type == "DIR"):
