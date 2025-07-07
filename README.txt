@@ -1,13 +1,10 @@
 Autor: Alessandro Vagner Lyra Rodrigues
-Data: 06/07/2025
+Data: 07/07/2025
 
-Versão alpha 0.0.2 do sistema de arquivos feito como trabalho 03 da disciplina de SO
+Versão alpha 0.0.3 do sistema de arquivos feito como trabalho 03 da disciplina de SO
 Novas alterações:
-    Operações de copiar, mover e renomear
-    Métodos privados auxiliares
-    Adaptações no código para acomodar as mudanças
-    Removido método rename da classe FFile
-    Alterações no código de teste para testar todas as funcionalidades novas
+    Melhoria na função de renomear para evitar bugs relacionados ao caminho dos sub-arquivos de um diretório renomeado
+    Mais detalhes sobre aquilo que não foi implementado no comentário do arquivo file_system.py
 
 IMPORTANTE: O código em questão ainda precisa ser adaptado para funcionar com inodes e listas encadeadas
 Possui todas as funcionalidades básicas de um sistema de arquivos (se eu não me engano)

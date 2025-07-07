@@ -2,6 +2,8 @@
 #Encapsula todo o funcionamento interno do sistema de arquivos e suas funções básicas
 #TODO: Adaptar para funcionar com inodes e lista encadeada (para ficar de acordo com o que o professor pediu)
 #IMPORTANTE: Falta adaptar para ficar de acordo com o que o professor pediu, esse é só o funcionamento base do sistema
+#IMPORTANTE: Para navegar pelo sistema de arquivos, é necessário entrar manualmente nos diretórios, já que um comando "cd" depende dessas adaptações
+#IMPORTANTE: Também não adicionei data de criação/modificação de arquivos
 
 from file_class import FFile
 
@@ -94,6 +96,9 @@ class FileSystem:
             if (j.name == fileName):
                 j.name = newName
                 j.path = self.cwd.path + "/" + newName #Caminho do arquivo
+                if (j.type == "DIR"):
+                    for v in j.data:
+                        self.__updateCopyPath__(v, j)
                 print(fileName + " renomeado para " + newName)
                 return True
             
