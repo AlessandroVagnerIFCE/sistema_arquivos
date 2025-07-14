@@ -32,7 +32,6 @@ class Inode:
         self.size = 0            # em bytes (ou caracteres simulados)
         self.block_indices = []  # lista de índices de blocos alocados
         self.head = None         # head do Block (lista encadeada)
-        self.next = None
 
 class FFileEnc:
     def __init__(self, inode: Inode):
