@@ -52,7 +52,7 @@ def repl_fs(fs):
             fs.printInodelist()
         elif cmd == 'freeblocks':
             fs.printFreeBlocksList()
-        elif cmd == 'alloblocks':
+        elif cmd == 'allocblocks':
             fs.printAllocatedBlocksList()
         elif cmd in ('help','?'):
             imprimir_ajuda()

@@ -59,6 +59,8 @@ class FileSystem:
             self.__alocar_blocos__(novo_inode, quantidade - INODE_SIZE)
         #Alocar blocos
         if (quantidade > len(self.free_blocks)):
+            if(inode.next != None):
+                self.__free_inode__(inode.next)
             print("Não há blocos disponíveis")
             return False
         for i in range(quantidade):
@@ -370,10 +372,13 @@ class FileSystem:
         """
         for entry in self.blocks[self.cwd.block_indices[0]].data:
             if entry.name == fileName and entry.type != "DIR":
-                self.__escrever_dados__(entry, content)
-                #entry.data = content
-                print(f"Escrito em {fileName}: {len(content)} bytes")
-                return True
+                if self.__escrever_dados__(entry, content):
+                    #entry.data = content
+                    print(f"Escrito em {fileName}: {len(content)} bytes")
+                    return True
+                else:
+                    print(f"Não foi possivel escrever o arquivo {fileName}: {len(content)} bytes")
+                    return False
         print("Arquivo não encontrado ou não é arquivo")
         return False    
 
