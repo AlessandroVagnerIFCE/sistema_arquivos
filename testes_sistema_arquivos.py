@@ -8,6 +8,7 @@ Escolha o FS para testar:
   1 - FileSystem (inode-based)
   2 - LinkedFileSystem (chain-based)
   3 - Executar testes 
+  4 - Executar comparação 
   help - mostrar ajuda
   exit - sair
 """)
@@ -65,67 +66,84 @@ from file_system import FileSystem
 from file_system_linked import LinkedFileSystem
 
 def comparar_desempenho():
-    tamanho_arquivo = 1000  # tamanho do conteúdo em caracteres
+    tamanho_arquivo = 1000
     conteudo = 'A' * tamanho_arquivo
-
-    print(f"\nComparando desempenho com arquivos de {tamanho_arquivo} caracteres...\n")
-
-    # TESTE: criação
-    print("1. Criação de arquivo:")
-    
-    fs = FileSystem()
-    inicio = time.time()
-    fs.newFile('teste.txt', 'TEXT', conteudo)
-    duracao_inode = time.time() - inicio
-    print(f"- FileSystem (inode): {duracao_inode:.6f}s")
-
-    lfs = LinkedFileSystem()
-    inicio = time.time()
-    lfs.newFile('teste.txt', 'TEXT', conteudo)
-    duracao_linked = time.time() - inicio
-    print(f"- LinkedFileSystem (cadeia): {duracao_linked:.6f}s")
-
-    # TESTE: leitura
-    print("\n2. Leitura de arquivo:")
-
-    inicio = time.time()
-    fs.readFile('teste.txt')
-    duracao_inode = time.time() - inicio
-    print(f"- FileSystem (inode): {duracao_inode:.6f}s")
-
-    inicio = time.time()
-    lfs.readFile('teste.txt')
-    duracao_linked = time.time() - inicio
-    print(f"- LinkedFileSystem (cadeia): {duracao_linked:.6f}s")
-
-    # TESTE: escrita
-    print("\n3. Escrita em arquivo:")
     novo_conteudo = 'B' * tamanho_arquivo
 
-    inicio = time.time()
-    fs.writeFile('teste.txt', novo_conteudo)
-    duracao_inode = time.time() - inicio
-    print(f"- FileSystem (inode): {duracao_inode:.6f}s")
+    print(f"\n📊 Comparando desempenho com arquivos de {tamanho_arquivo} caracteres...\n")
 
-    inicio = time.time()
-    lfs.writeFile('teste.txt', novo_conteudo)
-    duracao_linked = time.time() - inicio
-    print(f"- LinkedFileSystem (cadeia): {duracao_linked:.6f}s")
+    for sistema_nome, Sistema in [("FileSystem (inode)", FileSystem), ("LinkedFileSystem (cadeia)", LinkedFileSystem)]:
+        print(f"🔧 {sistema_nome}")
 
-    # TESTE: remoção
-    print("\n4. Remoção de arquivo:")
+        fs = Sistema()
+        erro_detectado = False
 
-    inicio = time.time()
-    fs.removeFile('teste.txt')
-    duracao_inode = time.time() - inicio
-    print(f"- FileSystem (inode): {duracao_inode:.6f}s")
+        # Criação
+        try:
+            inicio = time.time()
+            sucesso = fs.newFile('teste.txt', 'TEXT', conteudo)
+            duracao = time.time() - inicio
+            if not sucesso:
+                print("❌ Erro ao criar arquivo.")
+                erro_detectado = True
+            else:
+                print(f"  - Criação: {duracao:.6f}s")
+        except Exception as e:
+            print(f"❌ Exceção durante criação: {e}")
+            erro_detectado = True
 
-    inicio = time.time()
-    lfs.removeFile('teste.txt')
-    duracao_linked = time.time() - inicio
-    print(f"- LinkedFileSystem (cadeia): {duracao_linked:.6f}s")
+        if erro_detectado:
+            continue
 
-    print("\n🔚 Comparação concluída.")
+        # Leitura
+        try:
+            inicio = time.time()
+            conteudo_lido = fs.readFile('teste.txt')
+            duracao = time.time() - inicio
+            if conteudo_lido is None:
+                print("❌ Erro ao ler o arquivo.")
+                erro_detectado = True
+            else:
+                print(f"  - Leitura: {duracao:.6f}s")
+        except Exception as e:
+            print(f"❌ Exceção durante leitura: {e}")
+            erro_detectado = True
+
+        if erro_detectado:
+            continue
+
+        # Escrita
+        try:
+            inicio = time.time()
+            sucesso = fs.writeFile('teste.txt', novo_conteudo)
+            duracao = time.time() - inicio
+            if not sucesso:
+                print("❌ Erro ao escrever no arquivo.")
+                erro_detectado = True
+            else:
+                print(f"  - Escrita: {duracao:.6f}s")
+        except Exception as e:
+            print(f"❌ Exceção durante escrita: {e}")
+            erro_detectado = True
+
+        if erro_detectado:
+            continue
+
+        # Remoção
+        try:
+            inicio = time.time()
+            sucesso = fs.removeFile('teste.txt')
+            duracao = time.time() - inicio
+            if not sucesso:
+                print("❌ Erro ao remover o arquivo.")
+            else:
+                print(f"  - Remoção: {duracao:.6f}s")
+        except Exception as e:
+            print(f"❌ Exceção durante remoção: {e}")
+
+        print("")  # linha em branco para separação
+
+    print("✅ Comparação concluída.")
 
 
 def main():
@@ -141,8 +159,8 @@ def main():
 
         elif opc == '3':
             test_filesystem_errors()
-        #elif opc == '3':
-            #comparar_desempenho()
+        elif opc == '4':
+            comparar_desempenho()
         elif opc in ('help','?'):
             continue
         elif opc in ('exit','quit'):

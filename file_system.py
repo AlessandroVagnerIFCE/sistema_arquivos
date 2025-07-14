@@ -6,9 +6,9 @@ import math
 
 # parâmetros do FS simulado
 BLOCK_SIZE = 4  # caracteres por bloco
-TOTAL_BLOCKS = 100
+TOTAL_BLOCKS = 2000
 INODE_SIZE = 2  #Cada inode pode referenciar dois blocos
-TOTAL_INODES = 20
+TOTAL_INODES = 1000
 
 
 class Block:
@@ -112,7 +112,7 @@ class FileSystem:
             inode.next = None
         inode.size = 0
         inode.parent = None
-        self.printInodelist()
+        # self.printInodelist()
         #for k in self.inodes:
         #print(k.name)
 
@@ -440,73 +440,107 @@ class FileSystem:
 
         print("Arquivo não encontrado")
         return False
-
 def test_filesystem_errors():
+    print("Iniciando testes do sistema de arquivos...\n")
     fs = FileSystem()
     erros_detectados = []
 
-    # ERRO 1 - Criar arquivo com nome inválido
-    nomes_invalidos = ["", ".", ".."]
-    for nome in nomes_invalidos:
-        result = fs.newFile(nome, "ARQUIVO", "conteúdo")
-        if result:
+    def log(msg):
+        print("[TESTE] " + msg)
+
+    # ERRO 1 - Nome inválido
+    log("Verificando nomes inválidos...")
+    for nome in ["", ".", ".."]:
+        if fs.newFile(nome, "ARQUIVO", "conteúdo"):
             erros_detectados.append(f"ERRO CRÍTICO: Permitido criar arquivo com nome inválido: '{nome}'")
 
-    # ERRO 2 - Criar dois arquivos com mesmo nome no mesmo diretório
+    # ERRO 2 - Arquivos duplicados
+    log("Verificando duplicação de nomes...")
     fs.newFile("duplicado", "ARQUIVO", "teste")
-    resultado = fs.newFile("duplicado", "ARQUIVO", "conteúdo")
-    if resultado:
+    if fs.newFile("duplicado", "ARQUIVO", "conteúdo"):
         erros_detectados.append("ERRO CRÍTICO: Permitido criar dois arquivos com o mesmo nome no mesmo diretório")
 
-    # ERRO 3 - Caminho não atualizado após mover
+    # ERRO 3 - Caminho após mover
+    log("Verificando atualização de caminho ao mover...")
     fs.newFile("movido", "ARQUIVO", "abc")
-    dir_destino = fs.newFile("destino", "DIR")
+    destino = fs.newFile("destino", "DIR")
     fs.moveFile("movido", "/root/destino")
-    for f in fs.blocks[dir_destino.block_indices[0]].data:
+    for f in fs.blocks[destino.block_indices[0]].data:
         if f.name == "movido" and not f.path.endswith("/destino/movido"):
-            erros_detectados.append("ERRO CRÍTICO: Caminho não foi atualizado corretamente após mover")
+            erros_detectados.append("ERRO CRÍTICO: Caminho não foi atualizado após mover")
 
-    # ERRO 4 - Remoção não liberando blocos/inodes
-    initial_free_blocks = len(fs.free_blocks)
-    initial_free_inodes = len([i for i in fs.inodes if i.name == "INODE LIVRE"])
-
+    # ERRO 4 - Liberação de recursos
+    log("Verificando liberação de blocos/inodes após deleção...")
+    free_blocks_before = len(fs.free_blocks)
+    free_inodes_before = len([i for i in fs.inodes if i.name == "INODE LIVRE"])
     fs.removeFile("duplicado")
     fs.removeFile("movido")
     fs.removeFile("destino")
+    free_blocks_after = len(fs.free_blocks)
+    free_inodes_after = len([i for i in fs.inodes if i.name == "INODE LIVRE"])
+    if free_blocks_after <= free_blocks_before:
+        erros_detectados.append("ERRO CRÍTICO: Blocos não liberados após deleção")
+    if free_inodes_after <= free_inodes_before:
+        erros_detectados.append("ERRO CRÍTICO: Inodes não liberados após deleção")
 
-    after_free_blocks = len(fs.free_blocks)
-    after_free_inodes = len([i for i in fs.inodes if i.name == "INODE LIVRE"])
-
-    if after_free_blocks <= initial_free_blocks:
-        erros_detectados.append("ERRO CRÍTICO: Blocos não foram liberados após deleção")
-    if after_free_inodes <= initial_free_inodes:
-        erros_detectados.append("ERRO CRÍTICO: Inodes não foram liberados após deleção")
-
-    # ERRO 5 e 6 - Arquivo muito grande sem encadeamento ou limite
-    conteudo_grande = "a" * (BLOCK_SIZE * 10)
-    grande = fs.newFile("grande", "ARQUIVO", conteudo_grande)
+    # ERRO 5 e 6 - Arquivo muito grande
+    log("Verificando encadeamento de inodes para arquivos grandes...")
+    conteudo = "A" * (BLOCK_SIZE * 10)
+    grande = fs.newFile("grande", "ARQUIVO", conteudo)
     if not grande:
-        erros_detectados.append("ERRO CRÍTICO: Arquivo grande não foi criado")
+        erros_detectados.append("ERRO CRÍTICO: Arquivo grande não criado")
     elif grande.size > INODE_SIZE * BLOCK_SIZE and not grande.next:
-        erros_detectados.append("ERRO CRÍTICO: Inodes não foram encadeados corretamente para arquivo grande")
+        erros_detectados.append("ERRO CRÍTICO: Arquivo grande não encadeou inodes corretamente")
 
-    # ERRO 7/8/9 - Reutilização de blocos e inodes
-    usado_antes = fs.free_blocks[-1]
-    reutilizado = fs.newFile("teste_reuso", "ARQUIVO", "1234")
-    if usado_antes not in reutilizado.block_indices:
-        erros_detectados.append("ERRO CRÍTICO: Bloco não foi reutilizado após liberação")
+    # ERRO 7/8 - Reutilização de blocos
+    log("Verificando reutilização de blocos...")
+    ultimo_bloco_livre = fs.free_blocks[-1]
+    reuso = fs.newFile("reuso", "ARQUIVO", "1234")
+    if ultimo_bloco_livre not in reuso.block_indices:
+        erros_detectados.append("ERRO CRÍTICO: Bloco não reutilizado")
 
-    inodes_livres_antes = [i for i in fs.inodes if i.name == "INODE LIVRE"]
-    fs.removeFile("teste_reuso")
-    inodes_livres_depois = [i for i in fs.inodes if i.name == "INODE LIVRE"]
-    if len(inodes_livres_depois) <= len(inodes_livres_antes):
-        erros_detectados.append("ERRO CRÍTICO: Inode não reutilizado após remoção")
+    # ERRO 9 - Reutilização de inode
+    log("Verificando reutilização de inodes...")
+    livres_antes = len([i for i in fs.inodes if i.name == "INODE LIVRE"])
+    fs.removeFile("reuso")
+    livres_depois = len([i for i in fs.inodes if i.name == "INODE LIVRE"])
+    if livres_depois <= livres_antes:
+        erros_detectados.append("ERRO CRÍTICO: Inode não reutilizado")
 
+    # ERRO 10 - Limites de blocos/inodes
+    log("Verificando limite de blocos...")
+    for _ in range(TOTAL_BLOCKS):
+        fs.newFile(f"fill_block_{_}", "ARQUIVO", "A")
+    if fs.newFile("overflow", "ARQUIVO", "A"):
+        erros_detectados.append("ERRO CRÍTICO: Arquivo criado mesmo com blocos esgotados")
+
+    log("Verificando limite de inodes...")
+    for _ in range(TOTAL_INODES):
+        fs.newFile(f"fill_inode_{_}", "ARQUIVO", "A")
+    if fs.newFile("inode_overflow", "ARQUIVO", "A"):
+        erros_detectados.append("ERRO CRÍTICO: Arquivo criado mesmo com inodes esgotados")
+
+    # Novo - Sobrescrever arquivo e garantir substituição de conteúdo
+    log("Verificando escrita em arquivo existente...")
+    fs.newFile("sobrescreve", "ARQUIVO", "antigo")
+    fs.writeFile("sobrescreve", "novo_conteudo")
+    for i in fs.blocks:
+        if isinstance(i.data, list):
+            continue
+        if "antigo" in str(i.data):
+            erros_detectados.append("ERRO CRÍTICO: Conteúdo antigo ainda presente após sobrescrita")
+
+    # Novo - Renomear arquivo
+    log("Verificando renomeação de arquivo...")
+    fs.newFile("para_renomear", "ARQUIVO", "123")
+    fs.renameFile("para_renomear", "renomeado")
+    for f in fs.blocks[fs.cwd.block_indices[0]].data:
+        if f.name == "renomeado" and not f.path.endswith("/renomeado"):
+            erros_detectados.append("ERRO CRÍTICO: Caminho não foi atualizado após renomear")
+
+    print("\nResultados dos testes:")
     if erros_detectados:
-        print("Erros encontrados:")
-        for e in erros_detectados:
-            print("-", e)
+        for erro in erros_detectados:
+            print("❌", erro)
     else:
-        print("Todos os testes passaram. Nenhum erro crítico encontrado.")
-
-
+        print("✅ Todos os testes passaram com sucesso.")
