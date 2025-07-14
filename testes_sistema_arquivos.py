@@ -124,6 +124,10 @@ def comparar_desempenho():
 
 
 def main():
+
+    fs = FileSystem()
+    fs.run_debug_tests()
+
     while True:
         imprimir_ajuda()
         opc = input('Escolha opção> ').strip()

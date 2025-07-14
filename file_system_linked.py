@@ -31,15 +31,22 @@ class LinkedFileSystem:
             blk.next = None
         inode.block_indices.clear()
         inode.head = None
-        # aloca nova cadeia
+
         prev = None
         pos = 0
         while pos < len(content):
-            # encontra bloco livre
-            for blk in self.blocks:
-                if blk.data == '':
-                    break
-            pedaco = content[pos:pos+BLOCK_SIZE]
+            blk = self._get_free_block()
+            if blk is None:
+                print("Erro: sistema de arquivos sem blocos livres suficientes.")
+                # opcional: limpar blocos já alocados nesta chamada para evitar estado inconsistente
+                for idx in inode.block_indices:
+                    self.blocks[idx].data = ''
+                    self.blocks[idx].next = None
+                inode.block_indices.clear()
+                inode.head = None
+                inode.size = 0
+                return False
+            pedaco = content[pos:pos + BLOCK_SIZE]
             blk.data = pedaco
             inode.block_indices.append(blk.index)
             if prev:
@@ -49,6 +56,7 @@ class LinkedFileSystem:
             prev = blk
             pos += BLOCK_SIZE
         inode.size = len(content)
+        return True
 
     @staticmethod
     def _read_chain(head: Block) -> str:
@@ -72,7 +80,10 @@ class LinkedFileSystem:
         file = FFileEnc(inode)
         # monta conteúdo
         if ftype in ('TEXT', 'EXEC'):
-            self._allocate_chain(content or '', inode)
+            success = self._allocate_chain(content or '', inode)
+            if not success:
+                print("Falha ao criar arquivo: espaço insuficiente")
+                return False
         # link pai e path
         file.parent = self.cwd
         file.path = self.cwd.path + '/' + name
@@ -124,11 +135,14 @@ class LinkedFileSystem:
         return True
 
     def writeFile(self, name: str, content: str):
-        item = next((e for e in self.cwd.inode.dir_entries if e.name==name and e.type!='DIR'), None)
+        item = next((e for e in self.cwd.inode.dir_entries if e.name == name and e.type != 'DIR'), None)
         if not item:
             print('Arquivo não encontrado ou não é arquivo')
             return False
-        self._allocate_chain(content, item.inode)
+        success = self._allocate_chain(content, item.inode)
+        if not success:
+            print(f"Falha ao escrever em {name}: espaço insuficiente")
+            return False
         print(f"Escrito em {name}: {len(content)} bytes")
         return True
 
@@ -142,7 +156,7 @@ class LinkedFileSystem:
         return True
 
     def removeFile(self, name: str):
-        item = next((e for e in self.cwd.inode.dir_entries if e.name==name), None)
+        item = next((e for e in self.cwd.inode.dir_entries if e.name == name), None)
         if not item:
             print('Arquivo/Diretório não encontrado')
             return False
@@ -154,3 +168,4 @@ class LinkedFileSystem:
         self.cwd.inode.dir_entries.remove(item)
         print(f"{name} excluído com sucesso")
         return True
+
