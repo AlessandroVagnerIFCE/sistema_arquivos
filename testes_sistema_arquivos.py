@@ -50,9 +50,9 @@ def repl_fs(fs):
             fs.readFile(args[0])
         elif cmd == 'rm' and args:
             fs.removeFile(args[0])
-        elif cmd == 'inodes' and args:
-            fs.printInodesList()
-        elif cmd == 'freeblocks' and args:
+        elif cmd == 'inodes':
+            fs.printInodelist()
+        elif cmd == 'freeblocks':
             fs.printFreeBlocksList()
         elif cmd in ('help','?'):
             imprimir_ajuda()
