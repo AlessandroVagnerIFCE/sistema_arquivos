@@ -5,15 +5,17 @@ from file_class import FFile, Inode
 import math
 
 # parâmetros do FS simulado
-BLOCK_SIZE = 4       # caracteres por bloco
+BLOCK_SIZE = 4  # caracteres por bloco
 TOTAL_BLOCKS = 100
-INODE_SIZE = 2 #Cada inode pode referenciar dois blocos
+INODE_SIZE = 2  #Cada inode pode referenciar dois blocos
 TOTAL_INODES = 20
+
 
 class Block:
     def __init__(self, index):
         self.index = index
         self.data = ''
+
 
 class FileSystem:
     def __init__(self, name="FileSystem"):
@@ -46,7 +48,7 @@ class FileSystem:
                 i.type = ftype
                 return i
         return None
-    
+
     #Aloca blocos para um inode
     def __alocar_blocos__(self, inode: Inode, quantidade: int):
         #Encadear Inodes
@@ -63,15 +65,15 @@ class FileSystem:
         for i in range(quantidade):
             indice = self.free_blocks.pop()
             inode.block_indices.append(indice)
-        inode.size = len(inode.block_indices)*BLOCK_SIZE
+        inode.size = len(inode.block_indices) * BLOCK_SIZE
         return True
-    
+
     #Escreve um texto nos blocos associados a um inode
     def __escrever_dados__(self, inode: Inode, data: str):
         if (data == ""):
             return False
         tamanho = len(data)
-        quantidade_blocos = math.ceil(tamanho/BLOCK_SIZE)
+        quantidade_blocos = math.ceil(tamanho / BLOCK_SIZE)
         if (self.__alocar_blocos__(inode, quantidade_blocos)):
             start = 0
             end = BLOCK_SIZE
@@ -86,18 +88,19 @@ class FileSystem:
                 if (end > tamanho):
                     end = tamanho
                 #if (i is Block):
-                    #i = i.index
+                #i = i.index
                 self.blocks[i].data = dados
             if (inode.next != None):
                 self.__escrever_dados__(inode.next, data[end:])
             return True
         return False
-    
+
     #Libera um inode e todos os blocos associados a ele
     def __free_inode__(self, inode: Inode):
         if (inode.type == "DIR"):
-            if (len(inode.block_indices) > 0):     
-                for j in self.blocks[inode.block_indices[0]].data: #Alterar isso para considerar um diretório com tamanho limitado
+            if (len(inode.block_indices) > 0):
+                for j in self.blocks[
+                    inode.block_indices[0]].data:  #Alterar isso para considerar um diretório com tamanho limitado
                     self.__free_inode__(j)
         for i in inode.block_indices:
             self.__free_block__(self.blocks[i])
@@ -111,13 +114,12 @@ class FileSystem:
         inode.parent = None
         self.printInodelist()
         #for k in self.inodes:
-            #print(k.name)
+        #print(k.name)
 
     def __free_block__(self, block: Block):
         block.data = ''
         self.free_blocks.append(block.index)
 
-    
     def __read_blocks__(self, inode: Inode):
         if (inode.type == "DIR"):
             for j in self.blocks[inode.block_indices[0]].data:
@@ -127,11 +129,11 @@ class FileSystem:
         for i in inode.block_indices:
             print((self.blocks[i]).data)
         return True
-    
+
     def printInodelist(self):
         for k in self.inodes:
             print(k.name)
-    
+
     def printFreeBlocksList(self):
         for k in self.free_blocks:
             print(k)
@@ -162,7 +164,7 @@ class FileSystem:
                 print("Não foi possível alocar um inode para o arquivo")
                 return False
             file.type = type
-            if (type == "DIR"): #Alocar um bloco para armazenar um diretório
+            if (type == "DIR"):  #Alocar um bloco para armazenar um diretório
                 bloco = self.__alocar_blocos__(file, 1)
                 if (bloco):
                     self.blocks[file.block_indices[0]].data = []
@@ -174,9 +176,9 @@ class FileSystem:
                 #file.data = data
 
             #OBS: Falta limitar o tamanho do diretório, alocando mais blocos quando necessário
-            self.blocks[self.cwd.block_indices[0]].data.append(file) #Adicionar o novo arquivo ao diretório atual
+            self.blocks[self.cwd.block_indices[0]].data.append(file)  #Adicionar o novo arquivo ao diretório atual
             file.parent = self.cwd
-            file.path = self.cwd.path + "/" + fileName #Caminho do arquivo
+            file.path = self.cwd.path + "/" + fileName  #Caminho do arquivo
 
             return file
         except:
@@ -189,12 +191,12 @@ class FileSystem:
         for i in self.blocks[self.cwd.block_indices[0]].data:
             if (i.name == fileName):
                 self.__free_inode__(i)
-                self.blocks[self.cwd.block_indices[0]].data.remove(i) #Remover do diretório atual
+                self.blocks[self.cwd.block_indices[0]].data.remove(i)  #Remover do diretório atual
                 print(fileName + " removido com sucesso")
                 return True
         print("Arquivo não encontrado")
         return False
-            
+
     #Lista todos os arquivos no diretório atual
     #Análogo ao comando ls no terminal
     def ls(self):
@@ -224,7 +226,7 @@ class FileSystem:
             return True
         print("Não existe diretório acima do diretório atual")
         return False
-    
+
     #Imprime o caminho do diretório atual
     #Análogo ao comando cwd no terminal
     def pwd(self):
@@ -243,13 +245,13 @@ class FileSystem:
         for j in self.blocks[self.cwd.block_indices[0]].data:
             if (j.name == fileName):
                 j.name = newName
-                j.path = self.cwd.path + "/" + newName #Caminho do arquivo
+                j.path = self.cwd.path + "/" + newName  #Caminho do arquivo
                 if (j.type == "DIR"):
                     for v in self.blocks[j.block_indices[0]].data:
                         self.__updateCopyPath__(v, j)
                 print(fileName + " renomeado para " + newName)
                 return True
-            
+
         print("Arquivo não encontrado")
         return False
 
@@ -265,13 +267,13 @@ class FileSystem:
                         cp.data.append(self.__copyAux__(j, cp))
                 else:
                     cp.data = i.data
-                
+
                 self.copyBuffer = cp
                 return cp
-            
+
         print("Arquivo não encontrado")
         return False
-    
+
     def __copyAux__(self, file: FFile, parent: FFile):
         cp = FFile(file.name, file.type)
         if (file.type == "DIR"):
@@ -283,7 +285,7 @@ class FileSystem:
 
         cp.parent = parent
         return cp
-    
+
     #Adiciona o arquivo armazenado no buffer de cópia ao diretório atual
     #Retorna False se a operação falhar
     def pasteFile(self):
@@ -291,18 +293,18 @@ class FileSystem:
             print("Nenhum arquivo foi copiado para a área de transferência")
             return False
         cp = self.copyBuffer
-        
+
         #Verificar se o nome do arquivo já está sendo usado
         dupeCounter = 0
         pasteFlag = self.__checkDuplicateNames__(cp.name)
 
-        while(pasteFlag == True):
+        while (pasteFlag == True):
             dupeCounter += 1
             pasteFlag = self.__checkDuplicateNames__(cp.name + "(" + str(dupeCounter) + ")")
 
         if (dupeCounter > 0):
             cp.name = cp.name + "(" + str(dupeCounter) + ")"
-        
+
         #Adicionar a cópia ao diretório atual
         file = self.__alocar_inode__(cp.name, cp.type)
         if (file == None):
@@ -317,13 +319,13 @@ class FileSystem:
         file.path = self.cwd.path + "/" + file.name
         self.blocks[self.cwd.block_indices[0]].data.append(file)
         cp.parent = self.cwd
-        cp.path = self.cwd.path + "/" + cp.name #Caminho do arquivo
+        cp.path = self.cwd.path + "/" + cp.name  #Caminho do arquivo
 
         #Caso seja um diretório, atualizar o caminho de todos os sub-arquivos da cópia
         if (file.type == "DIR"):
             for i in self.blocks[file.blocks_indices[0]].data:
                 self.__updateCopyPath__(i, file)
-        
+
         self.copyBuffer = None
 
     def __checkDuplicateNames__(self, fileName: str):
@@ -331,7 +333,7 @@ class FileSystem:
             if (i.name == fileName):
                 return True
         return False
-    
+
     def __updateCopyPath__(self, file: Inode, parent: Inode):
         file.path = parent.path + "/" + file.name
         if (file.type == "DIR"):
@@ -344,10 +346,10 @@ class FileSystem:
             if (i.name == fileName):
                 print(i.path)
                 return True
-            
+
         print("Não existe arquivo com o nome " + fileName + " no diretório atual")
         return False
-    
+
     def readFile(self, fileName: str):
         """
         Alias para openFile, mantendo a interface de comparar_desempenho().
@@ -365,73 +367,143 @@ class FileSystem:
                 print(f"Escrito em {fileName}: {len(content)} bytes")
                 return True
         print("Arquivo não encontrado ou não é arquivo")
-        return False    
+        return False
 
+        #Move um arquivo do diretório atual para o diretório alvo
 
-    #Move um arquivo do diretório atual para o diretório alvo
     #Recebe o diretório alvo na forma de caminho
     #Retorna False se a operação falhar
     def moveFile(self, fileName: str, targetDir: str):
-            for i in self.blocks[self.cwd.block_indices[0]].data:
-                if (i.name == fileName):
-                    caminho = targetDir.split("/")
-                    current = self.root
-                    caminho.pop(0)
-                    for j in range(len(caminho)):
-                        if (current.type != "DIR"):
-                            print("Caminho inválido")
-                            return False
-                        for k in self.blocks[current.block_indices[0]].data:
-                            if (k.name == caminho[j]):
-                                current = k
-                    if (current.path == targetDir):
-                        #Verificar se há conflito de nomes
-                        for l in self.blocks[current.block_indices[0]].data:
-                            if (l.name == i.name):
-                                print("==============")
-                                print("Já existe arquivo com o nome " + i.name + " nesse diretório")
-                                op_success = False
-                                while(op_success == False):
-                                    print("Escolha uma das opções abaixo (digite um número):")
-                                    print("1- Substituir")
-                                    print("2- Renomear")
-                                    print("3- Cancelar a operação")
-                                    try:
-                                        op = int(input("Escolha uma operação valída: "))
-                                        if (op == 1):
-                                            self.blocks[current.block_indices[0]].data.remove(l)
+        for i in self.blocks[self.cwd.block_indices[0]].data:
+            if (i.name == fileName):
+                caminho = targetDir.split("/")
+                current = self.root
+                caminho.pop(0)
+                for j in range(len(caminho)):
+                    if (current.type != "DIR"):
+                        print("Caminho inválido")
+                        return False
+                    for k in self.blocks[current.block_indices[0]].data:
+                        if (k.name == caminho[j]):
+                            current = k
+                if (current.path == targetDir):
+                    #Verificar se há conflito de nomes
+                    for l in self.blocks[current.block_indices[0]].data:
+                        if (l.name == i.name):
+                            print("==============")
+                            print("Já existe arquivo com o nome " + i.name + " nesse diretório")
+                            op_success = False
+                            while (op_success == False):
+                                print("Escolha uma das opções abaixo (digite um número):")
+                                print("1- Substituir")
+                                print("2- Renomear")
+                                print("3- Cancelar a operação")
+                                try:
+                                    op = int(input("Escolha uma operação valída: "))
+                                    if (op == 1):
+                                        self.blocks[current.block_indices[0]].data.remove(l)
+                                        op_success = True
+                                    elif (op == 2):
+                                        newName = input("Insira o novo nome do arquivo: ")
+                                        auxFlag = True
+                                        for n in self.blocks[current.block_indices[0]].data:
+                                            if (n.name == newName):
+                                                print("O nome escolhido já está em uso")
+                                                auxFlag = False
+                                        if (auxFlag):
+                                            i.name = newName
                                             op_success = True
-                                        elif (op == 2):
-                                            newName = input("Insira o novo nome do arquivo: ")
-                                            auxFlag = True
-                                            for n in self.blocks[current.block_indices[0]].data:
-                                                if (n.name == newName):
-                                                    print("O nome escolhido já está em uso")
-                                                    auxFlag = False
-                                            if (auxFlag):
-                                                i.name = newName
-                                                op_success = True
-                                        elif (op == 3):
-                                            print("Operação cancelada")
-                                            op_success = True
-                                            return False
-                                        else:
-                                            print("Operação inválida")
-                                    except:
-                                        print("Você precisa escolher uma das operações válidas")
-                                        print("==============")
-                                        #return False
-                        self.blocks[current.block_indices[0]].data.append(i)
-                        i.parent = current
-                        i.path = i.parent.path + "/" + i.name
-                        self.blocks[self.cwd.block_indices[0]].data.remove(i)
+                                    elif (op == 3):
+                                        print("Operação cancelada")
+                                        op_success = True
+                                        return False
+                                    else:
+                                        print("Operação inválida")
+                                except:
+                                    print("Você precisa escolher uma das operações válidas")
+                                    print("==============")
+                                    #return False
+                    self.blocks[current.block_indices[0]].data.append(i)
+                    i.parent = current
+                    i.path = i.parent.path + "/" + i.name
+                    self.blocks[self.cwd.block_indices[0]].data.remove(i)
 
-                        #Se o arquivo movido for um diretório, atualizar o caminho de todos os sub-arquivos
-                        if (i.type == "DIR"):
-                            for v in self.blocks[i.block_indices[0]].data:
-                                self.__updateCopyPath__(v, i)
-                        print("Arquivo movido com sucesso")
-                        return True
-                    
-            print("Arquivo não encontrado")
-            return False
+                    #Se o arquivo movido for um diretório, atualizar o caminho de todos os sub-arquivos
+                    if (i.type == "DIR"):
+                        for v in self.blocks[i.block_indices[0]].data:
+                            self.__updateCopyPath__(v, i)
+                    print("Arquivo movido com sucesso")
+                    return True
+
+        print("Arquivo não encontrado")
+        return False
+
+def test_filesystem_errors():
+    fs = FileSystem()
+    erros_detectados = []
+
+    # ERRO 1 - Criar arquivo com nome inválido
+    nomes_invalidos = ["", ".", ".."]
+    for nome in nomes_invalidos:
+        result = fs.newFile(nome, "ARQUIVO", "conteúdo")
+        if result:
+            erros_detectados.append(f"ERRO CRÍTICO: Permitido criar arquivo com nome inválido: '{nome}'")
+
+    # ERRO 2 - Criar dois arquivos com mesmo nome no mesmo diretório
+    fs.newFile("duplicado", "ARQUIVO", "teste")
+    resultado = fs.newFile("duplicado", "ARQUIVO", "conteúdo")
+    if resultado:
+        erros_detectados.append("ERRO CRÍTICO: Permitido criar dois arquivos com o mesmo nome no mesmo diretório")
+
+    # ERRO 3 - Caminho não atualizado após mover
+    fs.newFile("movido", "ARQUIVO", "abc")
+    dir_destino = fs.newFile("destino", "DIR")
+    fs.moveFile("movido", "/root/destino")
+    for f in fs.blocks[dir_destino.block_indices[0]].data:
+        if f.name == "movido" and not f.path.endswith("/destino/movido"):
+            erros_detectados.append("ERRO CRÍTICO: Caminho não foi atualizado corretamente após mover")
+
+    # ERRO 4 - Remoção não liberando blocos/inodes
+    initial_free_blocks = len(fs.free_blocks)
+    initial_free_inodes = len([i for i in fs.inodes if i.name == "INODE LIVRE"])
+
+    fs.removeFile("duplicado")
+    fs.removeFile("movido")
+    fs.removeFile("destino")
+
+    after_free_blocks = len(fs.free_blocks)
+    after_free_inodes = len([i for i in fs.inodes if i.name == "INODE LIVRE"])
+
+    if after_free_blocks <= initial_free_blocks:
+        erros_detectados.append("ERRO CRÍTICO: Blocos não foram liberados após deleção")
+    if after_free_inodes <= initial_free_inodes:
+        erros_detectados.append("ERRO CRÍTICO: Inodes não foram liberados após deleção")
+
+    # ERRO 5 e 6 - Arquivo muito grande sem encadeamento ou limite
+    conteudo_grande = "a" * (BLOCK_SIZE * 10)
+    grande = fs.newFile("grande", "ARQUIVO", conteudo_grande)
+    if not grande:
+        erros_detectados.append("ERRO CRÍTICO: Arquivo grande não foi criado")
+    elif grande.size > INODE_SIZE * BLOCK_SIZE and not grande.next:
+        erros_detectados.append("ERRO CRÍTICO: Inodes não foram encadeados corretamente para arquivo grande")
+
+    # ERRO 7/8/9 - Reutilização de blocos e inodes
+    usado_antes = fs.free_blocks[-1]
+    reutilizado = fs.newFile("teste_reuso", "ARQUIVO", "1234")
+    if usado_antes not in reutilizado.block_indices:
+        erros_detectados.append("ERRO CRÍTICO: Bloco não foi reutilizado após liberação")
+
+    inodes_livres_antes = [i for i in fs.inodes if i.name == "INODE LIVRE"]
+    fs.removeFile("teste_reuso")
+    inodes_livres_depois = [i for i in fs.inodes if i.name == "INODE LIVRE"]
+    if len(inodes_livres_depois) <= len(inodes_livres_antes):
+        erros_detectados.append("ERRO CRÍTICO: Inode não reutilizado após remoção")
+
+    if erros_detectados:
+        print("Erros encontrados:")
+        for e in erros_detectados:
+            print("-", e)
+    else:
+        print("Todos os testes passaram. Nenhum erro crítico encontrado.")
+
+

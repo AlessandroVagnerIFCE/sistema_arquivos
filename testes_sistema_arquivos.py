@@ -1,5 +1,5 @@
 import shlex
-from file_system import FileSystem        #Inodes
+from file_system import FileSystem, test_filesystem_errors  # Inodes
 from file_system_linked import LinkedFileSystem #Lista encadeada
 
 def imprimir_ajuda():
@@ -7,6 +7,7 @@ def imprimir_ajuda():
 Escolha o FS para testar:
   1 - FileSystem (inode-based)
   2 - LinkedFileSystem (chain-based)
+  3 - Executar testes 
   help - mostrar ajuda
   exit - sair
 """)
@@ -137,6 +138,9 @@ def main():
         elif opc == '2':
             lfs = LinkedFileSystem()
             repl_fs(lfs)
+
+        elif opc == '3':
+            test_filesystem_errors()
         #elif opc == '3':
             #comparar_desempenho()
         elif opc in ('help','?'):
