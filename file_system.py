@@ -89,8 +89,8 @@ class FileSystem:
                 end = end + BLOCK_SIZE
                 if (end > tamanho):
                     end = tamanho
-                if (i is Block):
-                    i = i.index
+                #if (i is Block):
+                    #i = i.index
                 self.blocks[i].data = dados
             if (inode.next != None):
                 self.__escrever_dados__(inode.next, data[end:])
@@ -108,12 +108,18 @@ class FileSystem:
         inode.block_indices = []
         inode.name = "INODE LIVRE"
         inode.type = "INODE LIVRE"
-        inode.next = None
+        if (inode.next != None):
+            self.__free_inode__(inode.next)
+            inode.next = None
         inode.size = 0
+        inode.parent = None
+        self.printInodelist()
+        #for k in self.inodes:
+            #print(k.name)
 
     def __free_block__(self, block: Block):
         block.data = ''
-        self.free_blocks.append(block)
+        self.free_blocks.append(block.index)
 
     
     def __read_blocks__(self, inode: Inode):
@@ -125,6 +131,14 @@ class FileSystem:
         for i in inode.block_indices:
             print((self.blocks[i]).data)
         return True
+    
+    def printInodelist(self):
+        for k in self.inodes:
+            print(k.name)
+    
+    def printFreeBlocksList(self):
+        for k in self.free_blocks:
+            print(k)
 
     #Adiciona um novo arquivo e retorna o mesmo se a operação for concluída com sucesso
     #Retorna False se a operação falhar
@@ -132,6 +146,7 @@ class FileSystem:
         if (self.cwd == None):
             file = self.__alocar_inode__(fileName, type)
             if (file == None):
+                print("Não foi possível criar o diretório root")
                 return False
             file.type = type
             bloco = self.__alocar_blocos__(file, 1)
@@ -148,6 +163,7 @@ class FileSystem:
             #file = FFile(fileName, type)
             file = self.__alocar_inode__(fileName, type)
             if (file == None):
+                print("Não foi possível alocar um inode para o arquivo")
                 return False
             file.type = type
             if (type == "DIR"): #Alocar um bloco para armazenar um diretório
@@ -176,10 +192,12 @@ class FileSystem:
     def removeFile(self, fileName: str):
         for i in self.blocks[self.cwd.block_indices[0]].data:
             if (i.name == fileName):
-                self.blocks[self.cwd.block_indices[0]].data.remove(i) #Remover do diretório atual
                 self.__free_inode__(i)
+                self.blocks[self.cwd.block_indices[0]].data.remove(i) #Remover do diretório atual
                 print(fileName + " removido com sucesso")
                 return True
+        print("Arquivo não encontrado")
+        return False
             
     #Lista todos os arquivos no diretório atual
     #Análogo ao comando ls no terminal
@@ -198,6 +216,8 @@ class FileSystem:
                 self.__read_blocks__(i)
                 #i.read()
                 return True
+        print("Arquivo não encontrado")
+        return False
 
     #Muda o diretório atual para o diretório pai
     #Retorna False se não for possível        
