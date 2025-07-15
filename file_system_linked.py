@@ -168,3 +168,7 @@ class LinkedFileSystem:
         self.cwd.inode.dir_entries.remove(item)
         print(f"{name} excluído com sucesso")
         return True
+    
+    #Compatibilidade
+    def goUpwards(self):
+        self.openFile("..")
