@@ -139,6 +139,9 @@ class FileSystem:
     #Adiciona um novo arquivo e retorna o mesmo se a operação for concluída com sucesso
     #Retorna False se a operação falhar
     def newFile(self, fileName: str, type: str, data=None):
+        if ((fileName == "") or (fileName == ".") or (fileName == "..")):
+            print("Nome inválido")
+            return False
         if (self.cwd == None):
             file = self.__alocar_inode__(fileName, type)
             if (file == None):
