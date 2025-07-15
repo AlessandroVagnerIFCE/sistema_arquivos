@@ -31,46 +31,32 @@ class LinkedFileSystem:
             blk.next = None
         inode.block_indices.clear()
         inode.head = None
-
         # aloca nova cadeia
         prev = None
         pos = 0
         while pos < len(content):
             # encontra bloco livre
-            blk_livre = next((blk for blk in self.blocks if blk.data == ''), None)
-            if not blk_livre:
-                print("❌ Sem blocos livres disponíveis!")
-                break
-
-            pedaco = content[pos:pos + BLOCK_SIZE]
-            blk_livre.data = pedaco
-            inode.block_indices.append(blk_livre.index)
-
+            for blk in self.blocks:
+                if blk.data == '':
+                    break
+            pedaco = content[pos:pos+BLOCK_SIZE]
+            blk.data = pedaco
+            inode.block_indices.append(blk.index)
             if prev:
-                prev.next = blk_livre
+                prev.next = blk
             else:
-                inode.head = blk_livre
-
-            prev = blk_livre
+                inode.head = blk
+            prev = blk
             pos += BLOCK_SIZE
-
         inode.size = len(content)
 
     @staticmethod
     def _read_chain(head: Block) -> str:
         data = ''
         blk = head
-        visitados = set()
-        i = 0
         while blk:
-            if id(blk) in visitados:
-                print(f"⚠️ Detecção de ciclo após {i} blocos!")
-                break
-            visitados.add(id(blk))
-
             data += blk.data
             blk = blk.next
-            i += 1
         return data
 
     def newFile(self, name: str, ftype: str, content: str = None):
