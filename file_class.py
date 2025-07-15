@@ -1,6 +1,5 @@
 #Classe arquivo
 #Essa classe guarda os atributos de um arquivo
-#TODO: Adaptar para funcionar com inodes e lista encadeada (para ficar de acordo com o que o professor pediu)
 
 class FFile:
     def __init__(self, name: str, type: str, data=None):

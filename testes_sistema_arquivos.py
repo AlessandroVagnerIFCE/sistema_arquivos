@@ -1,6 +1,6 @@
 import shlex
-from file_system import FileSystem        # seu módulo original
-from file_system_linked import LinkedFileSystem
+from file_system import FileSystem        #Inodes
+from file_system_linked import LinkedFileSystem #Lista encadeada
 
 def imprimir_ajuda():
     print("""
