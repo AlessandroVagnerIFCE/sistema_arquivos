@@ -6,9 +6,9 @@ import math
 
 # parâmetros do FS simulado
 BLOCK_SIZE = 4  # caracteres por bloco
-TOTAL_BLOCKS = 2000
+TOTAL_BLOCKS = 100
 INODE_SIZE = 2  # Cada inode pode referenciar dois blocos
-TOTAL_INODES = 1000
+TOTAL_INODES = 200
 
 
 class Block:
@@ -151,16 +151,23 @@ class FileSystem:
             self.allocated_blocks.remove(block.index)
 
     def __alocar_blocos__(self, inode: Inode, quantidade: int):
-        # Encadear Inodes
+        #Encadear Inodes
         if (quantidade > INODE_SIZE):
             novo_inode = self.__alocar_inode__(inode.name, inode.type)
             if (novo_inode == None):
                 return False
             inode.next = novo_inode
             self.__alocar_blocos__(novo_inode, quantidade - INODE_SIZE)
-        # Alocar blocos
+        #Alocar blocos
         if (quantidade > len(self.free_blocks)):
             print("Não há blocos disponíveis")
+            return False
+        for i in range(quantidade):
+            indice = self.free_blocks.pop()
+            inode.block_indices.append(indice)
+            self.allocated_blocks.append(indice)
+        inode.size = len(inode.block_indices)*BLOCK_SIZE
+        return True
 
 
     # Adiciona um novo arquivo e retorna o mesmo se a operação for concluída com sucesso
@@ -179,6 +186,7 @@ class FileSystem:
             if (bloco):
                 self.blocks[file.block_indices[0]].data = []
                 return file
+            print("Não foi possível inicializar o sistema")
             return False
         for i in self.blocks[self.cwd.block_indices[0]].data:
             if (i.name == fileName):
