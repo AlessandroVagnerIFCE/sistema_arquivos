@@ -21,6 +21,7 @@ class FileSystem:
     def __init__(self, name="FileSystem"):
         self.name = name
         self.free_blocks = []
+        self.allocated_blocks = []
         self.blocks = []
         self.inodes = []
         for i in range(TOTAL_BLOCKS):
@@ -65,6 +66,7 @@ class FileSystem:
         for i in range(quantidade):
             indice = self.free_blocks.pop()
             inode.block_indices.append(indice)
+            self.allocated_blocks.append(indice)
         inode.size = len(inode.block_indices) * BLOCK_SIZE
         return True
 
@@ -119,6 +121,7 @@ class FileSystem:
     def __free_block__(self, block: Block):
         block.data = ''
         self.free_blocks.append(block.index)
+        self.allocated_blocks.remove(block.index)
 
     def printAllocatedBlocksList(self):
         for k in self.allocated_blocks:
